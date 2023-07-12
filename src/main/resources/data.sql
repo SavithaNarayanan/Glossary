@@ -1,0 +1,3 @@
+INSERT INTO glossary (id, term, definition)  VALUES (1, 'abyssal plain' , 'The ocean floor offshore from the continental margin, usually very flat with aslight slope.');
+INSERT INTO glossary (id, term, definition) VALUES (2, 'accrete' , 'To add terranes (small land masses or pieces of crust) to another, usually larger, land mass.');
+INSERT INTO glossary (id, term, definition) VALUES (3, 'alkaline' , 'Term pertaining to a highly basic, as opposed to acidic, subtance. For example, hydroxide or carbonate of sodium or potassium.');

@@ -72,7 +72,7 @@ public class GlossaryServiceImpl implements GlossaryService {
         List<Glossary> glossaryList = new ArrayList<>(glossaries.stream().map(
                 glossaryMapper::entityToModel
         ).toList());
-        glossaryList.sort(Comparator.comparing(Glossary::getTerm));
+        glossaryList.sort(Comparator.comparing(Glossary::getTerm, String.CASE_INSENSITIVE_ORDER));
         return glossaryList;
     }
 }

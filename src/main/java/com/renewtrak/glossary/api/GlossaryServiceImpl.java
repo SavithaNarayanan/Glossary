@@ -26,6 +26,11 @@ public class GlossaryServiceImpl implements GlossaryService {
 
     @Override
     public Glossary create(Glossary glossary) {
+        Optional<EGlossary> eGlossary = glossaryRepository.findByTermEqualsIgnoreCase(glossary.getTerm());
+        if(eGlossary.isPresent()){
+            //throw exception if the term is already defined
+            throw new ApiException(MessageUtil.get().getMessage(MessageConstants.DUPLICATE_TEM));
+        }
         EGlossary _glossary = glossaryRepository
                 .save(new EGlossary(glossary.getTerm(), glossary.getDefinition()));
         return glossaryMapper.entityToModel(_glossary);
@@ -34,12 +39,16 @@ public class GlossaryServiceImpl implements GlossaryService {
     @Override
     public Glossary update(Long id, Glossary glossary) {
         Optional<EGlossary> glossaryData = glossaryRepository.findById(id);
-
         if (glossaryData.isPresent()) {
-            EGlossary _glossary = glossaryData.get();
-            _glossary.setTerm(glossary.getTerm());
-            _glossary.setDefinition(glossary.getDefinition());
-            return glossaryMapper.entityToModel(glossaryRepository.save(_glossary));
+            Optional<EGlossary> glossaryWithSameTermExists = glossaryRepository.findByTermEqualsIgnoreCaseAndIdIsNot(glossary.getTerm(), glossaryData.get().getId());
+            if(glossaryWithSameTermExists.isEmpty()) {
+                EGlossary _glossary = glossaryData.get();
+                _glossary.setTerm(glossary.getTerm());
+                _glossary.setDefinition(glossary.getDefinition());
+                return glossaryMapper.entityToModel(glossaryRepository.save(_glossary));
+            } else {
+                throw new ApiException(MessageUtil.get().getMessage(MessageConstants.DUPLICATE_TEM));
+            }
         } else {
             throw new ApiException(MessageUtil.get().getMessage(MessageConstants.ID_NOT_FOUND));
         }

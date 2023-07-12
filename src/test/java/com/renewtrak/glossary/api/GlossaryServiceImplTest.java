@@ -4,16 +4,17 @@ import com.renewtrak.glossary.exception.ApiException;
 import com.renewtrak.glossary.message.MessageConstants;
 import com.renewtrak.glossary.message.MessageUtil;
 import com.renewtrak.glossary.model.Glossary;
-import org.junit.Assert;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 
 import java.util.List;
 import java.util.Optional;
 
 @SpringBootTest
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class GlossaryServiceImplTest {
 
     @Autowired
@@ -29,6 +30,21 @@ class GlossaryServiceImplTest {
     }
 
     @Test
+    void createDuplicate() {
+        Glossary glossary = glossaryService.create(new Glossary("synonym", "A synonym is a word, morpheme or phrase which has the exact same meaning, or a very similar meaning, to another word."));
+        Assertions.assertNotNull(glossary);
+        Assertions.assertNotNull(glossary.getId());
+        Assertions.assertEquals(glossary.getTerm() ,  "synonym");
+        try {
+            glossaryService.create(new Glossary("synonym", "A synonym is a word, morpheme or phrase which has the exact same meaning, or a very similar meaning, to another word."));
+            Assertions.fail();  //fail if exception not thrown
+        }
+        catch (ApiException apiException){
+            Assertions.assertEquals(apiException.getMessage(), MessageUtil.get().getMessage(MessageConstants.DUPLICATE_TEM));
+        }
+    }
+
+    @Test
     void update() {
         Glossary glossary = glossaryService.create(new Glossary("synonym", "A synonym is a word, morpheme or phrase which has the exact same meaning, or a very similar meaning, to another word."));
         Glossary glossaryUpdated = glossaryService.update(glossary.getId(), new Glossary("synonym", "Meaning Updated."));
@@ -40,12 +56,27 @@ class GlossaryServiceImplTest {
     }
 
     @Test
-    void updateWithWrongId() {
-        try{
-            glossaryService.update(1L, new Glossary("synonym", "Meaning Updated."));
+    void updateAndCreateDuplicate() {
+        Glossary glossary1 = glossaryService.create(new Glossary("synonym", "A synonym is a word, morpheme or phrase which has the exact same meaning, or a very similar meaning, to another word."));
+        Glossary glossary2 = glossaryService.create(new Glossary("new_synonym", "A synonym is a word, morpheme or phrase which has the exact same meaning, or a very similar meaning, to another word."));
+        try {
+            Glossary glossary2UpdatedAsDuplicateOdGlossary1 = glossaryService.update(glossary2.getId(), new Glossary("synonym", "Meaning Updated."));
+            Assertions.fail();  //fail if exception not thrown
         }
         catch (ApiException apiException){
-            Assert.assertEquals( apiException.getMessage(), MessageUtil.get().getMessage(MessageConstants.ID_NOT_FOUND));
+            Assertions.assertEquals(apiException.getMessage(), MessageUtil.get().getMessage(MessageConstants.DUPLICATE_TEM));
+        }
+
+    }
+
+    @Test
+    void updateWithWrongId() {
+        try{
+            glossaryService.update(100L, new Glossary("synonym", "Meaning Updated."));
+            Assertions.fail();  //fail if exception not thrown
+        }
+        catch (ApiException apiException){
+            Assertions.assertEquals(apiException.getMessage(), MessageUtil.get().getMessage(MessageConstants.ID_NOT_FOUND));
         }
 
     }
@@ -64,7 +95,8 @@ class GlossaryServiceImplTest {
     void deleteNonExistingId() {
         glossaryService.create(new Glossary("synonym", "A synonym is a word, morpheme or phrase which has the exact same meaning, or a very similar meaning, to another word."));
         try{
-            glossaryService.delete(1L);
+            glossaryService.delete(100L);
+            Assertions.fail(); //fail if exception not thrown
         }catch (ApiException apiException){
             Assertions.assertEquals(apiException.getMessage(), MessageUtil.get().getMessage(MessageConstants.ID_NOT_FOUND));
         }
